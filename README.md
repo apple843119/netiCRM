@@ -1,4 +1,4 @@
-netiCRM 
+netiCRM - test
 ==============
 
 You can also read this in [繁體中文](./README.zh-tw.md).
