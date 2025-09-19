@@ -25,23 +25,9 @@ jobs:
           docker exec neticrm-ci /init.sh
           docker exec neticrm-ci bash -c "cd /var/www/html && drush status | grep version"
           docker exec neticrm-ci bash -c "php -v"
+
       - name: Frontend - Contribution Editing - Playwright
         run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/sites/all/modules/civicrm/tests/playwright/ && npx playwright test tests/new_contribution.spec.js"
-      - name: Collect error logs on failure
-        if: failure()
-        run: |
-          echo "=== Docker container logs ==="
-          docker logs neticrm-ci
-          echo "=== PHP error logs ==="
-          docker exec neticrm-ci bash -c "if [ -f /var/www/html/log/php_errors.log ]; then tail -100 /var/www/html/log/php_errors.log; fi"
-          echo "=== Drupal error logs ==="
-          docker exec neticrm-ci bash -c "if [ -f /var/www/html/log/drupal.log ]; then tail -100 /var/www/html/log/drupal.log; fi"
-          echo "=== Apache error logs ==="
-          docker exec neticrm-ci bash -c "if [ -f /var/www/html/log/apache2/error.log ]; then tail -100 /var/www/html/log/apache2/error.log; fi"
-          echo "=== Drupal watchdog logs ==="
-          docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT && drush watchdog:show --count=50 --severity=Error,Critical,Alert,Emergency"
-          echo "=== Drupal status ==="
-          docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT && drush status"
       - name: Frontend - Advanced Search - Playwright
         run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/sites/all/modules/civicrm/tests/playwright/ && npx playwright test tests/advanced_search.spec.js"
       - name: Frontend - Group Editing - Playwright
@@ -68,6 +54,34 @@ jobs:
         run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/sites/all/modules/civicrm/tests/playwright/ && npx playwright test tests/contribution_booster.spec.js"
       - name: Frontend - Report Page Checking - Playwright
         run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/sites/all/modules/civicrm/tests/playwright/ && npx playwright test tests/report_check.spec.js"
+
+      - name: Collect error logs on failure
+        if: failure()
+        run: |
+          echo "=== Container Status ==="
+          docker ps -a
+          echo "=== Recent Docker Logs ==="
+          docker logs neticrm-ci --tail=100
+          echo "=== Find all log files ==="
+          docker exec neticrm-ci bash -c "find /var/log -name '*.log' -type f 2>/dev/null | head -20"
+          docker exec neticrm-ci bash -c "find /tmp -name '*.log' -type f 2>/dev/null | head -10"
+          docker exec neticrm-ci bash -c "find /var/www/html -name '*.log' -type f 2>/dev/null | head -10"
+          echo "=== PHP Error Logs ==="
+          docker exec neticrm-ci bash -c "for log in /var/log/php*.log /tmp/php*.log /var/www/html/log/php*.log; do if [ -f \$log ]; then echo '--- Content of '\$log' ---'; tail -50 \$log; fi; done"
+          echo "=== Apache Error Logs ==="
+          docker exec neticrm-ci bash -c "for log in /var/log/apache2/*.log /var/log/httpd/*.log; do if [ -f \$log ]; then echo '--- Content of '\$log' ---'; tail -50 \$log; fi; done"
+          echo "=== Drupal Watchdog Logs ==="
+          docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT && drush watchdog-show --count=50 --severity=error 2>/dev/null || drush ws --count=50 2>/dev/null || echo 'Watchdog command failed'"
+          echo "=== Drupal Database Errors ==="
+          docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT && drush sql-query \"SELECT FROM_UNIXTIME(timestamp) as time, type, severity, message FROM watchdog WHERE severity <= 3 ORDER BY timestamp DESC LIMIT 20\" 2>/dev/null || echo 'Cannot query watchdog table'"
+          echo "=== Web Server Response Test ==="
+          docker exec neticrm-ci bash -c "curl -I http://localhost:8080 2>/dev/null || echo 'Web server not responding'"
+          echo "=== Test specific failed URL ==="
+          docker exec neticrm-ci bash -c "curl -s http://localhost:8080/civicrm/contact/view?reset=1&cid=74 | head -200 || echo 'Cannot access specific URL'"
+          echo "=== Drupal Status ==="
+          docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT && drush status"
+          echo "=== PHP Configuration ==="
+          docker exec neticrm-ci bash -c "php -i | grep -E '(error_log|display_errors|log_errors|error_reporting)'"
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -100,31 +114,19 @@ jobs:
           docker exec neticrm-ci /init.sh
           docker exec neticrm-ci bash -c "cd /var/www/html && drush status | grep version"
           docker exec neticrm-ci bash -c "php -v"
+
       - name: Frontend - Contribution Editing - Playwright
-        run: docker exec neticrm-ci  bash -c "cd \$DRUPAL_ROOT/sites/all/modules/civicrm/tests/playwright/ && npx playwright test tests/new_contribution.spec.js"
-      - name: Collect error logs on failure
-        if: failure()
-        run: |
-          echo "=== Docker container logs ==="
-          docker logs neticrm-ci
-          echo "=== PHP error logs ==="
-          docker exec neticrm-ci bash -c "if [ -f /var/www/html/log/php_errors.log ]; then tail -100 /var/www/html/log/php_errors.log; fi"
-          echo "=== Drupal error logs ==="
-          docker exec neticrm-ci bash -c "if [ -f /var/www/html/log/drupal.log ]; then tail -100 /var/www/html/log/drupal.log; fi"
-          echo "=== Drupal watchdog logs ==="
-          docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT && drush watchdog:show --count=50 --severity=Error,Critical,Alert,Emergency"
-          echo "=== Drupal status ==="
-          docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT && drush status"
+        run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/sites/all/modules/civicrm/tests/playwright/ && npx playwright test tests/new_contribution.spec.js"
       - name: Frontend - Advanced Search - Playwright
-        run: docker exec neticrm-ci  bash -c "cd \$DRUPAL_ROOT/sites/all/modules/civicrm/tests/playwright/ && npx playwright test tests/advanced_search.spec.js"
+        run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/sites/all/modules/civicrm/tests/playwright/ && npx playwright test tests/advanced_search.spec.js"
       - name: Frontend - Group Editing - Playwright
-        run: docker exec neticrm-ci  bash -c "cd \$DRUPAL_ROOT/sites/all/modules/civicrm/tests/playwright/ && npx playwright test tests/add_group.spec.js"
+        run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/sites/all/modules/civicrm/tests/playwright/ && npx playwright test tests/add_group.spec.js"
       - name: Frontend - Check Membership - Playwright
         run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/sites/all/modules/civicrm/tests/playwright/ && npx playwright test tests/check_membership.spec.js"
       - name: Frontend - Import Records - Playwright
         run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/sites/all/modules/civicrm/tests/playwright/ && npx playwright test tests/import.spec.js"
       - name: Frontend - Event Normal Registration - Playwright
-        run: docker exec neticrm-ci  bash -c "cd \$DRUPAL_ROOT/sites/all/modules/civicrm/tests/playwright/ && npx playwright test tests/event_normal_register.spec.js"
+        run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/sites/all/modules/civicrm/tests/playwright/ && npx playwright test tests/event_normal_register.spec.js"
       - name: Frontend - Event Registration for limited participants without waitlist - Playwright
         run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/sites/all/modules/civicrm/tests/playwright/ && npx playwright test tests/event_limit_nowait_register.spec.js"
       - name: Frontend - Event Registration for limited participants with waitlist - Playwright
@@ -134,13 +136,41 @@ jobs:
       - name: Frontend - Event Registration for unlimited participants require approval - Playwright
         run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/sites/all/modules/civicrm/tests/playwright/ && npx playwright test tests/event_unlimit_approval_register.spec.js"
       - name: Frontend - Participant Editing - Playwright
-        run: docker exec neticrm-ci  bash -c "cd \$DRUPAL_ROOT/sites/all/modules/civicrm/tests/playwright/ && npx playwright test tests/event_participant.spec.js"
+        run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/sites/all/modules/civicrm/tests/playwright/ && npx playwright test tests/event_participant.spec.js"
       - name: Frontend - Mailing Editing - Playwright
         run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/sites/all/modules/civicrm/tests/playwright/ && npx playwright test tests/edit_mailing.spec.js"
       - name: Frontend - Contribution Booster - Playwright
         run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/sites/all/modules/civicrm/tests/playwright/ && npx playwright test tests/contribution_booster.spec.js"
       - name: Frontend - Report Page Checking - Playwright
         run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/sites/all/modules/civicrm/tests/playwright/ && npx playwright test tests/report_check.spec.js"
+
+      - name: Collect error logs on failure
+        if: failure()
+        run: |
+          echo "=== Container Status ==="
+          docker ps -a
+          echo "=== Recent Docker Logs ==="
+          docker logs neticrm-ci --tail=100
+          echo "=== Find all log files ==="
+          docker exec neticrm-ci bash -c "find /var/log -name '*.log' -type f 2>/dev/null | head -20"
+          docker exec neticrm-ci bash -c "find /tmp -name '*.log' -type f 2>/dev/null | head -10"
+          docker exec neticrm-ci bash -c "find /var/www/html -name '*.log' -type f 2>/dev/null | head -10"
+          echo "=== PHP Error Logs ==="
+          docker exec neticrm-ci bash -c "for log in /var/log/php*.log /tmp/php*.log /var/www/html/log/php*.log; do if [ -f \$log ]; then echo '--- Content of '\$log' ---'; tail -50 \$log; fi; done"
+          echo "=== Apache Error Logs ==="
+          docker exec neticrm-ci bash -c "for log in /var/log/apache2/*.log /var/log/httpd/*.log; do if [ -f \$log ]; then echo '--- Content of '\$log' ---'; tail -50 \$log; fi; done"
+          echo "=== Drupal Watchdog Logs ==="
+          docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT && drush watchdog-show --count=50 --severity=error 2>/dev/null || drush ws --count=50 2>/dev/null || echo 'Watchdog command failed'"
+          echo "=== Drupal Database Errors ==="
+          docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT && drush sql-query \"SELECT FROM_UNIXTIME(timestamp) as time, type, severity, message FROM watchdog WHERE severity <= 3 ORDER BY timestamp DESC LIMIT 20\" 2>/dev/null || echo 'Cannot query watchdog table'"
+          echo "=== Web Server Response Test ==="
+          docker exec neticrm-ci bash -c "curl -I http://localhost:8080 2>/dev/null || echo 'Web server not responding'"
+          echo "=== Test specific failed URL ==="
+          docker exec neticrm-ci bash -c "curl -s http://localhost:8080/civicrm/contact/view?reset=1&cid=74 | head -200 || echo 'Cannot access specific URL'"
+          echo "=== Drupal Status ==="
+          docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT && drush status"
+          echo "=== PHP Configuration ==="
+          docker exec neticrm-ci bash -c "php -i | grep -E '(error_log|display_errors|log_errors|error_reporting)'"
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -175,33 +205,19 @@ jobs:
           docker exec neticrm-ci /init.sh
           docker exec neticrm-ci bash -c "cd /var/www/html && drush status | grep version"
           docker exec neticrm-ci bash -c "php -v"
+
       - name: Frontend - Contribution Editing - Playwright
-        run: docker exec neticrm-ci  bash -c "cd \$DRUPAL_ROOT/modules/civicrm/tests/playwright/ && npx playwright test tests/new_contribution.spec.js"
-      - name: Collect error logs on failure
-        if: failure()
-        run: |
-          echo "=== Docker container logs ==="
-          docker logs neticrm-ci
-          echo "=== PHP error logs ==="
-          docker exec neticrm-ci bash -c "if [ -f /var/www/html/log/php_errors.log ]; then tail -100 /var/www/html/log/php_errors.log; fi"
-          echo "=== Drupal error logs ==="
-          docker exec neticrm-ci bash -c "if [ -f /var/www/html/log/drupal.log ]; then tail -100 /var/www/html/log/drupal.log; fi"
-          echo "=== Apache error logs ==="
-          docker exec neticrm-ci bash -c "if [ -f /var/www/html/log/apache2/error.log ]; then tail -100 /var/www/html/log/apache2/error.log; fi"
-          echo "=== Drupal watchdog logs ==="
-          docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT && drush watchdog:show --count=50 --severity=Error,Critical,Alert,Emergency"
-          echo "=== Drupal status ==="
-          docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT && drush status"
+        run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/modules/civicrm/tests/playwright/ && npx playwright test tests/new_contribution.spec.js"
       - name: Frontend - Advanced Search - Playwright
-        run: docker exec neticrm-ci  bash -c "cd \$DRUPAL_ROOT/modules/civicrm/tests/playwright/ && npx playwright test tests/advanced_search.spec.js"
+        run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/modules/civicrm/tests/playwright/ && npx playwright test tests/advanced_search.spec.js"
       - name: Frontend - Group Editing - Playwright
-        run: docker exec neticrm-ci  bash -c "cd \$DRUPAL_ROOT/modules/civicrm/tests/playwright/ && npx playwright test tests/add_group.spec.js"
+        run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/modules/civicrm/tests/playwright/ && npx playwright test tests/add_group.spec.js"
       - name: Frontend - Check Membership - Playwright
         run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/modules/civicrm/tests/playwright/ && npx playwright test tests/check_membership.spec.js"
       - name: Frontend - Import Records - Playwright
         run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/modules/civicrm/tests/playwright/ && npx playwright test tests/import.spec.js"
       - name: Frontend - Event Normal Registration - Playwright
-        run: docker exec neticrm-ci  bash -c "cd \$DRUPAL_ROOT/modules/civicrm/tests/playwright/ && npx playwright test tests/event_normal_register.spec.js"
+        run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/modules/civicrm/tests/playwright/ && npx playwright test tests/event_normal_register.spec.js"
       - name: Frontend - Event Registration for limited participants without waitlist - Playwright
         run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/modules/civicrm/tests/playwright/ && npx playwright test tests/event_limit_nowait_register.spec.js"
       - name: Frontend - Event Registration for limited participants with waitlist - Playwright
@@ -209,15 +225,43 @@ jobs:
       - name: Frontend - Event Registration for limited participants required approval - Playwright
         run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/modules/civicrm/tests/playwright/ && npx playwright test tests/event_limit_approval_register.spec.js"
       - name: Frontend - Event Registration for unlimited participants require approval - Playwright
-        run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/modules/civicrm/tests/playwright/ && npx playwright test tests/event_unlimit_approval_register.spec.js"
+        run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/modules/civicrm/tests/playwright/ && npx playwright test tests/event_limit_approval_register.spec.js"
       - name: Frontend - Participant Editing - Playwright
-        run: docker exec neticrm-ci  bash -c "cd \$DRUPAL_ROOT/modules/civicrm/tests/playwright/ && npx playwright test tests/event_participant.spec.js"
+        run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/modules/civicrm/tests/playwright/ && npx playwright test tests/event_participant.spec.js"
       - name: Frontend - Mailing Editing - Playwright
-        run: docker exec neticrm-ci  bash -c "cd \$DRUPAL_ROOT/modules/civicrm/tests/playwright/ && npx playwright test tests/edit_mailing.spec.js"
+        run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/modules/civicrm/tests/playwright/ && npx playwright test tests/edit_mailing.spec.js"
       - name: Frontend - Contribution Booster - Playwright
         run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/modules/civicrm/tests/playwright/ && npx playwright test tests/contribution_booster.spec.js"
       - name: Frontend - Report Page Checking - Playwright
         run: docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT/modules/civicrm/tests/playwright/ && npx playwright test tests/report_check.spec.js"
+
+      - name: Collect error logs on failure
+        if: failure()
+        run: |
+          echo "=== Container Status ==="
+          docker ps -a
+          echo "=== Recent Docker Logs ==="
+          docker logs neticrm-ci --tail=100
+          echo "=== Find all log files ==="
+          docker exec neticrm-ci bash -c "find /var/log -name '*.log' -type f 2>/dev/null | head -20"
+          docker exec neticrm-ci bash -c "find /tmp -name '*.log' -type f 2>/dev/null | head -10"
+          docker exec neticrm-ci bash -c "find /var/www/html -name '*.log' -type f 2>/dev/null | head -10"
+          echo "=== PHP Error Logs ==="
+          docker exec neticrm-ci bash -c "for log in /var/log/php*.log /tmp/php*.log /var/www/html/log/php*.log; do if [ -f \$log ]; then echo '--- Content of '\$log' ---'; tail -50 \$log; fi; done"
+          echo "=== Apache Error Logs ==="
+          docker exec neticrm-ci bash -c "for log in /var/log/apache2/*.log /var/log/httpd/*.log; do if [ -f \$log ]; then echo '--- Content of '\$log' ---'; tail -50 \$log; fi; done"
+          echo "=== Drupal Watchdog Logs ==="
+          docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT && drush watchdog:show --count=50 --severity=error 2>/dev/null || drush ws --count=50 2>/dev/null || echo 'Watchdog command failed'"
+          echo "=== Drupal Database Errors ==="
+          docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT && drush sql-query \"SELECT FROM_UNIXTIME(timestamp) as time, type, severity, message FROM watchdog WHERE severity <= 3 ORDER BY timestamp DESC LIMIT 20\" 2>/dev/null || echo 'Cannot query watchdog table'"
+          echo "=== Web Server Response Test ==="
+          docker exec neticrm-ci bash -c "curl -I http://localhost:8080 2>/dev/null || echo 'Web server not responding'"
+          echo "=== Test specific failed URL ==="
+          docker exec neticrm-ci bash -c "curl -s http://localhost:8080/civicrm/contact/view?reset=1&cid=74 | head -200 || echo 'Cannot access specific URL'"
+          echo "=== Drupal Status ==="
+          docker exec neticrm-ci bash -c "cd \$DRUPAL_ROOT && drush status"
+          echo "=== PHP Configuration ==="
+          docker exec neticrm-ci bash -c "php -i | grep -E '(error_log|display_errors|log_errors|error_reporting)'"
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -248,7 +292,7 @@ jobs:
           secure: false
           ignore_cert: true
           convert_markdown: true
-          subject: '[${{github.repository}}] Run failed: ${{github.workflow}} - ${{github.ref_name}} (${{steps.vars.outputs.sha_short}})'
+          subject: "[${{github.repository}}] Run failed: ${{github.workflow}} - ${{github.ref_name}} (${{steps.vars.outputs.sha_short}})"
           body: |
             Executed by: ${{github.actor}}
             Job name: ${{github.job}}
