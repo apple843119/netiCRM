@@ -258,7 +258,7 @@ test.describe.serial('Batch Action', () => {
             /* select "Profile" */
             element = '#uf_group_id';
             await utils.findElement(page, element);
-            await utils.selectOption(page.locator(element), { value: 8 });
+            await utils.selectOption(page.locator(element), { value: "8" });
 
             /* click "Continue" button */
             element = '#_qf_PickProfile_next';
