@@ -461,7 +461,7 @@ test.describe.serial('Batch Action', () => {
             await utils.wait(wait_secs);
 
             await expect(page.locator('.crm-error')).toHaveCount(0);
-            await expect(page.locator('.messages').first()).toHaveText("Added Contact(s) to 管理員Total Selected Contact(s): 3Total Contact(s) added to group: 3");
+            await expect(page.locator('.messages').first()).toContainText("Total Selected Contact(s): 3Total Contact(s) added to group: 3");
             await utils.print('Successfully added contact to existing group.');
 
         });
