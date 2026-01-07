@@ -291,7 +291,7 @@ test.describe.serial('Batch Action', () => {
                 }
                 
                 /* Country */
-                element = `tr:nth-child(${i}) td:nth-child(5) input`;
+                element = `tr:nth-child(${i}) td:nth-child(5) select`;
                 if (await page.locator(element).first().evaluate(el => el.selectedIndex) == 0) {
                     await utils.selectOption(page.locator(element), { index: 1 });
                 }
