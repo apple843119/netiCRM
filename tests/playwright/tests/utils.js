@@ -62,6 +62,9 @@ async function selectOption(locator, option) {
             expectValue = await optionLocator.nth(option.index).getAttribute('value');
         }
     }
+    else if ('value' in option){
+        expectValue = option.value;
+    }
     else if (typeof option === 'string') expectValue = option;
 
     await locator.selectOption(option);
