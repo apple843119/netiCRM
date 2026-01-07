@@ -61,9 +61,20 @@ async function selectOption(locator, option) {
             if (option.index < 0) option.index += await optionLocator.count();
             expectValue = await optionLocator.nth(option.index).getAttribute('value');
         }
-         else if ('value' in option){
-        expectValue = option.value;
-         }
+        else if ('value' in option){
+            expectValue = option.value;
+        }
+        else if ('label' in option){
+            var optionLocator = await locator.locator('option');
+            var optionCount = await optionLocator.count();
+            for (let i = 0; i < optionCount; i++) {
+                var optionText = await optionLocator.nth(i).textContent();
+                if (optionText.trim() === option.label) {
+                    expectValue = await optionLocator.nth(i).getAttribute('value');
+                    break;
+                }
+            }
+        }
     }
     else if (typeof option === 'string') expectValue = option;
 
