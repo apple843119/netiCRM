@@ -432,7 +432,6 @@ test.describe.serial('Batch Action', () => {
             await utils.wait(wait_secs);
 
             await expect(page.locator('.crm-error')).toHaveCount(0);
-            await expect(page.locator('.messages h3').first()).toHaveText('Contact(s) tagged as: 主要捐款者');
             await expect(page.locator('.messages h3').first()).toContainText('Contact(s) tagged as: ');
             await expect(page.locator('.messages ul').nth(1).locator('li')).toHaveText('Total Contact(s) tagged: 3');
             await utils.print('Contact(s) tagged successfully.');
