@@ -419,10 +419,10 @@ test.describe.serial('Batch Action', () => {
             /* select "Tag Contacts (assign tags)" and click "Go" */
             await select_action_and_go(page, "3", 'form#AddToTag')
 
-            /* click scrollbar */
-            element = 'tr.crm-contact-task-addtotag-form-block-tag div.listing-box div:first-child input';
+            /* click scrollbar and choose major donor*/
+            element = 'tr.crm-contact-task-addtotag-form-block-tag input[id="tag[4]"]';
             await utils.findElement(page, element);
-            await utils.clickElement(page, page.locator(element).first());
+            await utils.clickElement(page, page.locator(element));
 
             /* click "Tag Contacts" */
             element = '#_qf_AddToTag_next-bottom';
@@ -433,6 +433,7 @@ test.describe.serial('Batch Action', () => {
 
             await expect(page.locator('.crm-error')).toHaveCount(0);
             await expect(page.locator('.messages h3').first()).toHaveText('Contact(s) tagged as: 主要捐款者');
+            await expect(page.locator('.messages h3').first()).toContainText('Contact(s) tagged as: ');
             await expect(page.locator('.messages ul').nth(1).locator('li')).toHaveText('Total Contact(s) tagged: 3');
             await utils.print('Contact(s) tagged successfully.');
 
