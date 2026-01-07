@@ -73,7 +73,7 @@ async function select_action_and_go(page, option_label, expect_element) {
     /* select option from the "Actions" dropdown */
     element = '#task';
     await utils.findElement(page, element);
-    await utils.selectOption(page.locator(element), { label: option_label });
+    await utils.selectOption(page.locator(element), { value: option_label });
 
     /* click "Go" button */
     element = 'input#Go';
@@ -181,7 +181,7 @@ test.describe.serial('Batch Action', () => {
             await list_contacts_and_select_top_n(page);
 
             /* select "Add Contact to Organization" and click "Go" */
-            await select_action_and_go(page, 'Add Contact to Organization', 'form#AddToOrganization')
+            await select_action_and_go(page, 10, 'form#AddToOrganization')
 
             /* select "Relationship Type" */
             element = '#relationship_type_id';
@@ -226,7 +226,7 @@ test.describe.serial('Batch Action', () => {
             await list_contacts_and_select_top_n(page);
 
             /* select "Record Activity for Contacts" and click "Go" */
-            await select_action_and_go(page, 'Record Activity for Contacts', 'form#Activity');
+            await select_action_and_go(page, 11, 'form#Activity');
 
             /* select "Activity Type" */
             element = '#activity_type_id';
@@ -253,7 +253,7 @@ test.describe.serial('Batch Action', () => {
             await list_contacts_and_select_top_n(page);
 
             /* select "Batch Update via Profile" and click "Go" */
-            await select_action_and_go(page, 'Batch Update via Profile', 'form#PickProfile');
+            await select_action_and_go(page, 17, 'form#PickProfile');
 
             /* select "Profile" */
             element = '#uf_group_id';
@@ -325,7 +325,7 @@ test.describe.serial('Batch Action', () => {
             await list_contacts_and_select_top_n(page);
 
             /* select "Export Contacts" and click "Go" */
-            await select_action_and_go(page, 'Export Contacts', 'form#Select');
+            await select_action_and_go(page, 5, 'form#Select');
 
             /* click "Continue" button */
             element = '#_qf_Select_next-top';
@@ -369,7 +369,7 @@ test.describe.serial('Batch Action', () => {
             await select_top_n(page, 2);
         
             /* select "Merge Contacts" and click "Go" */
-            await select_action_and_go(page, 'Merge Contacts', 'form#Merge');
+            await select_action_and_go(page, 21, 'form#Merge');
 
             /* click "Merge" button */
             element = '#_qf_Merge_next-bottom';
@@ -393,7 +393,7 @@ test.describe.serial('Batch Action', () => {
             await select_top_n(page, 2);
 
             /* select "Merge Contacts" and click "Go" */
-            await select_action_and_go(page, 'Merge Contacts', 'form#Merge');
+            await select_action_and_go(page, 21, 'form#Merge');
 
             /* click "Mark this pair as not a duplicate" button */
             element = '#notDuplicate';
@@ -417,7 +417,7 @@ test.describe.serial('Batch Action', () => {
             await list_contacts_and_select_top_n(page);
 
             /* select "Tag Contacts (assign tags)" and click "Go" */
-            await select_action_and_go(page, 'Tag Contacts (assign tags)', 'form#AddToTag')
+            await select_action_and_go(page, 3, 'form#AddToTag')
 
             /* click scrollbar */
             element = 'tr.crm-contact-task-addtotag-form-block-tag div.listing-box div:first-child input';
@@ -446,7 +446,7 @@ test.describe.serial('Batch Action', () => {
             await list_contacts_and_select_top_n(page);
 
             /* select "Add Contacts to Group" and click "Go" */
-            await select_action_and_go(page, 'Add Contacts to Group', 'form#AddToGroup');
+            await select_action_and_go(page, 1, 'form#AddToGroup');
 
             /* select first option from "Select Group" dropdown */
             element = '#group_id';
@@ -474,7 +474,7 @@ test.describe.serial('Batch Action', () => {
             await list_contacts_and_select_top_n(page);
 
             /* select "Add Contacts to Group" and click "Go" */
-            await select_action_and_go(page, 'Add Contacts to Group', 'form#AddToGroup');
+            await select_action_and_go(page, 1, 'form#AddToGroup');
 
             /* click "Create New Group" */
             element = '#CIVICRM_QFID_1_4';
@@ -512,7 +512,7 @@ test.describe.serial('Batch Action', () => {
             await utils.clickElement(page, page.locator(element).first());
 
             /* select "New Smart Group" and click "Go" */
-            await select_action_and_go(page, 'New Smart Group', 'form#SaveSearch');
+            await select_action_and_go(page, 13, 'form#SaveSearch');
 
             /* fill in "Name" */
             element = '#title';
@@ -551,7 +551,7 @@ test.describe.serial('Batch Action', () => {
             await select_top_n(page, 2);
 
             /* select "Delete Contacts" and click "Go" */
-            await select_action_and_go(page, 'Delete Contacts', 'form#Delete');
+            await select_action_and_go(page, 8, 'form#Delete');
 
             /* click "Delete Contact(s)" */
             element = '#_qf_Delete_done';
